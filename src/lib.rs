@@ -1,11 +1,21 @@
 use csv::Reader;
 use csv::Writer;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::error::Error;
+
+const INITIAL_RATING: u32 = 200;
 
 pub struct Config {
     pub filename: String,
-    pub command: String,
+    operation: Operation,
+}
+
+enum Operation {
+    Help,
+    AddPlayer(String),
+    Update { white_player: String, black_player: String, score: String},
+    Reset,
 }
 
 impl Config {
@@ -16,8 +26,20 @@ impl Config {
 
         let filename = args[1].clone();
         let command = args[2].clone();
+        
+        let operation = match command.as_str() {
+            "help" => Operation::Help,
+            "add" => {
+                if args.len() < 4 {
+                    return Err("not enough arguments for this command");
+                }
+                Operation::AddPlayer(args[3].clone()) 
+            },
+            "test::reset" => Operation::Reset,
+            _ => return Err("unknown command"),
+        };
 
-        Ok(Config { filename, command })
+        Ok(Config { filename, operation })
     }
 }
 
@@ -48,19 +70,38 @@ fn write_to_csv(filename: &str, data: HashMap<String, u32>) -> Result<(), Box<dy
     Ok(())
 }
 
+fn create_player(player_id: String, mut data: HashMap<String, u32>) -> Result<(), Box<dyn Error>> {
+    match data.entry(player_id) {
+        Entry::Occupied(_) => {
+           return Err("player_id already in use".into()) 
+        }
+        Entry::Vacant(v) => {
+           v.insert(INITIAL_RATING);
+        }
+    }
+
+    Ok(())
+}
+
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    match config.command.as_str() {
-        "write" => {
+    let mut data = read_to_hashmap(&config.filename)?;
+    match config.operation {
+        Operation::Help => {
+            return Err("not implemented yet".into())
+        }
+        Operation::Update{ .. } => {
+            return Err("not implemented yet".into())
+        }
+        Operation::AddPlayer(player_id) => {
+           create_player(player_id, data)?; 
+           // TODO write_to_csv(&config.filename, data)?;
+        }
+        Operation::Reset => {
             let mut data = HashMap::new();
             data.insert("Damian".to_string(), 1000);
             data.insert("Daniel".to_string(), 800);
             write_to_csv(&config.filename, data)?;
         }
-        "read" => {
-            let mut data = read_to_hashmap(&config.filename)?;
-            println!("{:?}", data);
-        }
-        _ => (),
     };
 
     Ok(())
