@@ -40,13 +40,13 @@ pub struct Config {
 impl Config {
     pub fn new(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 3 {
+            if args[1] == "help" {
+                return Ok(Config {
+                    filename: "".to_string(),
+                    operation: Operation::Help,
+                });
+            }
             return Err("not enough arguments. Try leelo help.");
-        }
-        if args[1] == "help" {
-            return Ok(Config {
-                filename: "".to_string(),
-                operation: Operation::Help,
-            });
         }
 
         let filename = args[1].clone();
