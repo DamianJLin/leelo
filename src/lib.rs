@@ -169,6 +169,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             println!("COMMANDS:");
             println!("\thelp");
             println!("\t\tPrint help information");
+            println!("\tnew <file>");
+            println!("\t\tcreate new leelo table");
             println!("\tgame <file> <white player id> <black player id> <score>");
             println!("\t\tRecord results of a game and update ratings");
             println!("\tplayer <file> <new player id>");
