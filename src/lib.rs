@@ -210,10 +210,9 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
                 max_player_id_len = cmp::max(max_player_id_len, (*player_id).len());
             }
             for (player_id, rating) in &data_vec {
-                let player_id_len = player_id.len();
-                let tabs = (max_player_id_len - player_id_len) / 8 + 2;
+                let tabs = max_player_id_len / 8 + 1;
                 print!(
-                    "{}{}{}\n",
+                    "{}\r{}{}\n",
                     player_id,
                     "\t".repeat(tabs),
                     (**rating).round() as u32
