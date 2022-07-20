@@ -100,12 +100,10 @@ impl Config {
             _ => return Err("unknown command. Try leelo help.".into()),
         };
 
-        Ok(
-            Config {
-                filename,
-                operation,
-            }
-        )
+        Ok(Config {
+            filename,
+            operation,
+        })
     }
 }
 
