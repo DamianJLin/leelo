@@ -189,15 +189,15 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             println!("");
             println!("COMMANDS:");
             println!("\thelp");
-            println!("\t\tPrint help information");
+            println!("\t\t\tPrint help information");
             println!("\tnew <file>");
-            println!("\t\tcreate new leelo table");
-            println!("\tgame <white player id> <black player id> <score> <file>");
-            println!("\t\tRecord results of a game and update ratings");
-            println!("\tplayer <new player id> <file>");
-            println!("\t\tcreate new player");
+            println!("\t\t\tCreate new leelo table");
+            println!("\tgame <white> <black> <score> <file>");
+            println!("\t\t\tRecord results of a game and update ratings");
+            println!("\tplayer <id> <file>");
+            println!("\t\t\tCreate new player");
             println!("\tview <file>");
-            println!("\t\tview players and ratings");
+            println!("\t\t\tView players and ratings");
         }
         Operation::New => {
             let mut data: HashMap<String, f64> = HashMap::new();
