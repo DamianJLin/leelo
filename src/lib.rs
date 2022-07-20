@@ -33,58 +33,79 @@ enum Operation {
 }
 
 pub struct Config {
-    filename: String,
+    filename: Option<String>,
     operation: Operation,
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            if args[1] == "help" {
-                return Ok(Config {
-                    filename: "".to_string(),
-                    operation: Operation::Help,
-                });
-            }
-            return Err("not enough arguments. Try leelo help.");
+    pub fn new(args: &[String]) -> Result<Config, Box<dyn Error>> {
+        if args.len() < 2 {
+            return Err("not enough arguments. Try leelo help.".into());
         }
 
-        let filename = args[1].clone();
-        let command = args[2].clone();
+        let command = args[1].clone();
+        let mut filename = None;
 
         let operation = match command.as_str() {
+            // leelo help
             "help" | "h" => Operation::Help,
-            "new" | "n" => Operation::New,
+
+            // leelo new <filename>
+            "new" | "n" => {
+                if args.len() < 3 {
+                    return Err("not enough arguments for this command.".into());
+                }
+                filename = Some(args[2].clone());
+                Operation::New
+            }
+
+            // leelo player <player_id> <filename>
             "player" | "p" => {
                 if args.len() < 4 {
-                    return Err("not enough arguments for this command.");
+                    return Err("not enough arguments for this command.".into());
                 }
-                Operation::AddPlayer(args[3].clone())
+                filename = Some(args[3].clone());
+                Operation::AddPlayer(args[2].clone())
             }
+
+            // leelo game <white_player_id> <black_player_id> <result> <filename>
             "game" | "g" => {
                 if args.len() < 6 {
-                    return Err("not enough arguments for this command.");
+                    return Err("not enough arguments for this command.".into());
                 }
-                let result = match args[5].as_str() {
+                let result = match args[4].as_str() {
                     "1-0" => MatchResult::WhiteWin,
                     "0-1" => MatchResult::BlackWin,
                     "0.5-0.5" => MatchResult::Draw,
-                    _ => return Err("unable to interpret match_result argument."),
+                    _ => return Err("unable to interpret score argument.".into()),
                 };
+                filename = Some(args[5].clone());
                 Operation::Update {
-                    white_player_id: args[3].clone(),
-                    black_player_id: args[4].clone(),
+                    white_player_id: args[2].clone(),
+                    black_player_id: args[3].clone(),
                     result: result,
                 }
             }
-            "view" | "v" => Operation::View,
-            _ => return Err("unknown command. Try leelo help."),
+
+            // leelo view <filename>
+            "view" | "v" => {
+                if args.len() < 3 {
+                    return Err("not enough arguments for this command.".into());
+                };
+                filename = Some(args[2].clone());
+                Operation::View
+            }
+
+            // leelo _ *<args>
+            _ => return Err("unknown command. Try leelo help.".into()),
         };
 
-        Ok(Config {
-            filename,
-            operation,
-        })
+        Ok(
+            Config {
+                filename,
+                operation,
+            }
+        )
     }
 }
 
@@ -171,16 +192,17 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             println!("\t\tPrint help information");
             println!("\tnew <file>");
             println!("\t\tcreate new leelo table");
-            println!("\tgame <file> <white player id> <black player id> <score>");
+            println!("\tgame <white player id> <black player id> <score> <file>");
             println!("\t\tRecord results of a game and update ratings");
-            println!("\tplayer <file> <new player id>");
+            println!("\tplayer <new player id> <file>");
             println!("\t\tcreate new player");
             println!("\tview <file>");
             println!("\t\tview players and ratings");
         }
         Operation::New => {
             let mut data: HashMap<String, f64> = HashMap::new();
-            write_to_csv(&config.filename, &mut data)?;
+            let filename = config.filename.unwrap();
+            write_to_csv(&filename, &mut data)?;
         }
         Operation::Update {
             white_player_id,
@@ -188,19 +210,22 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
             result,
         } => {
             let mut data: HashMap<String, f64> = HashMap::new();
-            read_to_hashmap(&config.filename, &mut data)?;
+            let filename = config.filename.unwrap();
+            read_to_hashmap(&filename, &mut data)?;
             update_ratings(white_player_id, black_player_id, result, &mut data)?;
-            write_to_csv(&config.filename, &mut data)?;
+            write_to_csv(&filename, &mut data)?;
         }
         Operation::AddPlayer(player_id) => {
             let mut data: HashMap<String, f64> = HashMap::new();
-            read_to_hashmap(&config.filename, &mut data)?;
+            let filename = config.filename.unwrap();
+            read_to_hashmap(&filename, &mut data)?;
             create_player(player_id, &mut data)?;
-            write_to_csv(&config.filename, &mut data)?;
+            write_to_csv(&filename, &mut data)?;
         }
         Operation::View => {
             let mut data: HashMap<String, f64> = HashMap::new();
-            read_to_hashmap(&config.filename, &mut data)?;
+            let filename = config.filename.unwrap();
+            read_to_hashmap(&filename, &mut data)?;
 
             let mut data_vec: Vec<(&String, &f64)> = data.iter().collect();
             data_vec.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap());
